@@ -18,6 +18,15 @@ class DB:
     @abstractclassmethod
     def reset():
         raise NotImplementedError
+    
+    @abstractclassmethod
+    def __exit__ ():
+        raise NotImplementedError
+
+    @abstractclassmethod
+    def __enter__(self):
+        raise NotImplementedError
+
 
 
 class JsonDB(DB):
@@ -38,15 +47,11 @@ class JsonDB(DB):
     def set(self,key,value):
         self.data[key] = {"value": value, "outdated": False}
 
-        self.close(self.data)
-
     def delete(self,key):
         if key in self.data:
             del self.data[key]
         else:
             print("This is not a key!")
-
-        self.close(self.data)
 
     def reset(self,key):
         if key not in self.data:
@@ -55,7 +60,11 @@ class JsonDB(DB):
         self.data[key]['outdated'] = True
         print(key, 'is now outdated!')
 
+    def __exit__(self):
         self.close(self.data)
+    
+    def __enter__(self):
+        pass
 
 @click.group()
 def cli():
@@ -83,8 +92,8 @@ def delete(key):
 @cli.command()
 @click.argument('key')
 def reset(key):
-    db = JsonDB()
-    db.reset(key)
+    with JsonDB() as db:
+        db.reset(key)
 
 if __name__ == '__main__':
    cli()
