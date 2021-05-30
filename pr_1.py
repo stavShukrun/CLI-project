@@ -1,41 +1,47 @@
-from abc import abstractclassmethod
+from abc import abstractclassmethod, abstractmethod
 import click
 import json
 
 class DB:
-    @abstractclassmethod
-    def get():
-        raise NotImplementedError
+    @abstractmethod
+    def get(self,key):
+        pass
     
-    @abstractclassmethod
-    def set():
-        raise NotImplementedError
+    @abstractmethod
+    def set(self,key,value):
+        pass
 
-    @abstractclassmethod
-    def delete():
-        raise NotImplementedError
+    @abstractmethod
+    def delete(self,key):
+        pass
 
-    @abstractclassmethod
-    def reset():
-        raise NotImplementedError
+    @abstractmethod
+    def reset(self,key):
+        pass
     
-    @abstractclassmethod
-    def __exit__ ():
-        raise NotImplementedError
+    @abstractmethod
+    def close(self, data):
+        pass
+    
+    @abstractmethod
+    def __exit__ (self,exc_type, exc_value, exc_traceback):
+        pass
 
-    @abstractclassmethod
+    @abstractmethod
     def __enter__(self):
-        raise NotImplementedError
-
-
+        pass
 
 class JsonDB(DB):
     def __init__(self):
-        with open('j.json') as f:
-            self.data = json.load(f)
+        with open('db.json','r+') as f:
+            try:
+                self.data = json.load(f)
+            except json.decoder.JSONDecodeError as e:
+                print('file is empty',e)
+                self.data = {}
     
     def close(self, data):
-        with open('j.json', 'w') as f:
+        with open('db.json', 'w') as f:
             json.dump(data,f)
 
     def get(self,key):
@@ -60,11 +66,11 @@ class JsonDB(DB):
         self.data[key]['outdated'] = True
         print(key, 'is now outdated!')
 
-    def __exit__(self):
+    def __exit__(self,exc_type, exc_value, exc_traceback):
         self.close(self.data)
     
     def __enter__(self):
-        pass
+        return self
 
 @click.group()
 def cli():
@@ -73,21 +79,21 @@ def cli():
 @cli.command()
 @click.argument('key')
 def get(key):
-    db = JsonDB()
-    db.get(key)
+    with JsonDB() as db:
+        db.get(key)
 
 @cli.command()
 @click.argument('key')
 @click.argument('value')
 def set(key,value):
-    db = JsonDB()
-    db.set(key,value)
+    with JsonDB() as db:
+        db.set(key,value)
    
 @cli.command()
 @click.argument('key')
 def delete(key):
-    db = JsonDB()
-    db.delete(key)
+    with JsonDB() as db:
+        db.delete(key)
 
 @cli.command()
 @click.argument('key')
