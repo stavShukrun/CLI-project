@@ -3,3 +3,5 @@ Scripts/
 Include/
 pyvenv.cfg
 __pycache__/
+sqlite_db.sqlite/
+db.json/

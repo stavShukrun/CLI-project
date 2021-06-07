@@ -1,9 +1,10 @@
-from abc import abstractmethod
+from abc import abstractmethod,ABC
 import click
 import json
 import sqlite3
 
-class DB:
+
+class DB(ABC):
     @abstractmethod
     def get(self,key):
         pass
@@ -21,10 +22,6 @@ class DB:
         pass
     
     @abstractmethod
-    def close(self, data):
-        pass
-    
-    @abstractmethod
     def __exit__ (self,exc_type, exc_value, exc_traceback):
         pass
 
@@ -34,7 +31,7 @@ class DB:
 
 class JsonDB(DB):
     def __init__(self):
-        with open('db.json','r+') as f:
+        with open('db_json.json','r+') as f:
             try:
                 self.data = json.load(f)
             except json.decoder.JSONDecodeError as e:
@@ -65,7 +62,6 @@ class JsonDB(DB):
             raise KeyError(key)
         
         self.data[key]['outdated'] = True
-        print(key, 'is now outdated!')
 
     def __exit__(self,exc_type, exc_value, exc_traceback):
         self.close(self.data)
@@ -104,7 +100,6 @@ class sqlDB(DB):
         keys = self.cur.execute(f"SELECT key FROM hash WHERE key='{key}'").fetchall()
         if keys:
             self.cur.execute(f'UPDATE hash SET outdated = 1 WHERE key="{key}";')
-            print(key, 'is now outdated!')
 
     def __enter__(self):
          return self
@@ -112,39 +107,45 @@ class sqlDB(DB):
     def __exit__(self, exc_type, exc_value, exc_traceback):
         self.conn.commit()
         self.conn.close()
-
+        
 @click.group()
 def cli():
    pass
 
+DB_Proxy = {
+   'json':  JsonDB(),
+   'sqlite': sqlDB()
+}
+
 @cli.command()
+@click.argument('db_type')
 @click.argument('key')
-def get(key):
-    with sqlDB() as db:
-    # with JsonDB() as db:
+def get(db_type,key):
+    with DB_Proxy[db_type] as db:
         db.get(key)
 
 @cli.command()
+@click.argument('db_type')
 @click.argument('key')
 @click.argument('value')
-def set(key,value):
-    with sqlDB() as db:
-    # with JsonDB() as db:
+def set(db_type,key,value):
+    with DB_Proxy[db_type] as db:
         db.set(key,value)
    
 @cli.command()
+@click.argument('db_type')
 @click.argument('key')
-def delete(key):
-    with sqlDB() as db:
-    # with JsonDB() as db:
+def delete(db_type,key):
+    with DB_Proxy[db_type] as db:
         db.delete(key)
 
 @cli.command()
+@click.argument('db_type')
 @click.argument('key')
-def reset(key):
-    with sqlDB() as db:
-    # with JsonDB() as db:
+def reset(db_type,key):
+    with DB_Proxy[db_type] as db:
         db.reset(key)
+        print(key, 'is now outdated!')
 
 if __name__ == '__main__':
    cli()
