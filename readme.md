@@ -1,5 +1,8 @@
 # CLI-Tool
-A smple project that work with two data base (sqlite,json).
+A smple CLI tool that work with data bases
 
 ## installaion
-use [Github](https://github.com/stavShukrun/CLI-project) too download cli.py and db_utils.py
+install requirements.txt
+
+## use
+pick data base and choose what you whant to do, for more help do a --hlep comnd 

@@ -10,14 +10,14 @@ DB_Proxy = {
    'sqlite': sqlDB
 }
 
-@cli.command('get', short_help='get the value for your key')
+@cli.command('get', short_help='return value for your key')
 @click.argument('db_type')
 @click.argument('key')
 def get(db_type,key):
     with DB_Proxy[db_type]() as db:
         db.get(key)
 
-@cli.command('set', short_help='set new key and value our change value')
+@cli.command('set', short_help='create new key and value or change for old key is value')
 @click.argument('db_type')
 @click.argument('key')
 @click.argument('value')
